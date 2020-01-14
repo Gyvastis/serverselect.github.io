@@ -19,6 +19,7 @@ const getRealBandwidth = bandwidthString => {
   };
 };
 
+const filterPrice = 100;
 
 class App extends React.Component {
   constructor(props) {
@@ -44,23 +45,23 @@ class App extends React.Component {
             meta: servers[0].meta,
             price: server.price[1] !== undefined ? server.price[1] : server.price[0],
           }))
-          .filter(server => server.price < 30)
+          .filter(server => server.price < filterPrice)
           .map(server => ({
             ...server,
             storage: _.sortBy(server.storage, storage => storage.type).reverse()[0],
           }))
           .sort(
-            firstBy((a, b) => a.price < b.price)
-            .thenBy((a, b) => a.ram.amout > b.ram.amout)
-            .thenBy((a, b) => parseFloat(a.cpu.freq.replace(' Ghz')) > parseFloat(b.cpu.freq.replace(' Ghz')) ? -1 : 1 ? -1 : 1)
-            .thenBy((a, b) => a.cpu.cores > b.cpu.cores)
-            .thenBy((a, b) => (a.storage.size * a.storage.amount * (a.storage.unit === 'TB' ? 1000 : 1)) > (b.storage.size * b.storage.amount * (b.storage.unit === 'TB' ? 1000 : 1)))
+            firstBy((a, b) => 0)
             .thenBy((a, b) => a.storage.type === 'SSD' ? -1 : (b.storage.type === 'SSD' ? 1 : 0))
+            .thenBy((a, b) => parseFloat(a.cpu.freq.replace(' Ghz')) > parseFloat(b.cpu.freq.replace(' Ghz')))
+            .thenBy((a, b) => a.ram.amout > b.ram.amout)
+            .thenBy((a, b) => a.cpu.cores > b.cpu.cores)
             .thenBy((a, b) => {
               const aBandw = getRealBandwidth(a.bandwidth);
               const bBandw = getRealBandwidth(b.bandwidth);
               return (aBandw.amount * (aBandw.unit === 'Gbps' ? 1024 : 1)) > (bBandw.amount * (bBandw.unit === 'Gbps' ? 1024 : 1));
             })
+            .thenBy((a, b) => (a.storage.size * a.storage.amount * (a.storage.unit === 'TB' ? 1000 : 1)) > (b.storage.size * b.storage.amount * (b.storage.unit === 'TB' ? 1000 : 1)))
             .thenBy((a, b) => a.ip > b.ip)
           )
       });
@@ -82,6 +83,7 @@ class App extends React.Component {
       dataField: column,
       text: column,
     }));
+
     const data = this.state.servers.map((server, key) => ({
       id: key + 1,
       provider: server.meta.provider,
@@ -94,12 +96,19 @@ class App extends React.Component {
       location: `${server.location.country}, ${server.location.city}`
     }));
 
-    console.log(this.state.servers);
+    const avg = filterPrice / 3;
+    // const avg = _.mean(this.state.servers.map(server => server.price));
+
+    const rowStyle = (row, rowIndex) => {
+      if(row.price && row.price.replace('€', '') > avg) return {};
+
+      return { backgroundColor: 'orange' };
+    };
 
     return (
       <div className="App">
-        {this.state.servers <= 0 && <div>Loading...</div>}
         <BootstrapTable
+          loading={this.state.servers <= 0}
           keyField='id'
           data={data}
           columns={columns}
@@ -108,6 +117,7 @@ class App extends React.Component {
           hover={true}
           striped={true}
           condensed={true}
+          rowStyle={rowStyle}
         />
       </div>
     );
