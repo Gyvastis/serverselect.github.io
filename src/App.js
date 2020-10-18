@@ -1,9 +1,9 @@
 import React from 'react';
 // import fs from 'fs';
 // import logo from './logo.svg';
-import _ from 'lodash';
+// import _ from 'lodash';
 import shortid from 'shortid';
-import firstBy from 'thenby';
+// import firstBy from 'thenby';
 import BootstrapTable from 'react-bootstrap-table-next';
 import './App.css';
 
@@ -14,7 +14,7 @@ const readServers = () =>
     const servers = [];
 
     response.forEach(serverList => {
-      serverList.servers.map(server => {
+      serverList.servers.forEach(server => {
         servers.push({
           ...server,
           provider: serverList.meta.provider,
@@ -25,7 +25,7 @@ const readServers = () =>
     return servers;
   });
 
-const filterPrice = 100;
+// const filterPrice = 100;
 
 class App extends React.Component {
   constructor(props) {
