@@ -27,4 +27,5 @@ jobs:
       with:
         path: |
           **/node_modules
+        key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
     - run: yarn deploy
