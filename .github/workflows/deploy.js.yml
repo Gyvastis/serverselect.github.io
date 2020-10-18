@@ -29,6 +29,7 @@ jobs:
           **/node_modules
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
     - run: |-
+        git config credential.helper wincred
         git config user.name "Automated"
         git config user.email "actions@users.noreply.github.com"
         yarn deploy
