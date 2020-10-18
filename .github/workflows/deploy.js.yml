@@ -28,4 +28,7 @@ jobs:
         path: |
           **/node_modules
         key: ${{ runner.os }}-${{ hashFiles('**/lockfiles') }}
-    - run: yarn deploy
+    - run: |-
+        git config user.name "Automated"
+        git config user.email "actions@users.noreply.github.com"
+        yarn deploy
