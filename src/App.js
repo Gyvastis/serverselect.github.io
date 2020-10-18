@@ -102,7 +102,7 @@ class App extends React.Component {
     }));
 
     // const avg = filterPrice / 3;
-    const avg = _.mean(this.state.servers.map(server => server.price));
+    // const avg = _.mean(this.state.servers.map(server => server.price));
 
     const rowStyle = (row, rowIndex) => {
       // if(row.price.value && row.price > avg) return null;
