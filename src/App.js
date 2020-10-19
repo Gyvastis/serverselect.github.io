@@ -76,24 +76,8 @@ class App extends React.Component {
                         ...server,
                         id: shortid.generate(),
                     }))
-                    .sort(firstBy(v => v.price.value)
-                        // .thenBy((a, b) => parseFloat(a.cpu.frequency.replace(' Ghz')) > parseFloat(b.cpu.frequency.replace(' Ghz')))
-                        // .thenBy((a, b) => a.memory.amout > b.memory.amout)
-                        // .thenBy((a, b) => a.cpu.cores > b.cpu.cores)
-                        // .thenBy((a, b) => a.storage.type === 'SSD' ? -1 : (b.storage.type === 'SSD' ? 1 : 0))
-                        // .thenBy((a, b) => (a.storage.size * a.storage.amount * (a.storage.unit === 'TB' ? 1000 : 1)) > (b.storage.size * b.storage.amount * (b.storage.unit === 'TB' ? 1000 : 1)))
-                        // .thenBy((a, b) => (a.bandwidthSpeed.value * (a.bandwidthSpeed.unit === 'Gbps' ? 1024 : 1)) > (b.bandwidthSpeed.value * (b.bandwidthSpeed.value.unit === 'Gbps' ? 1024 : 1)))
-                        // .thenBy((a, b) => a.ip > b.ip)
-                    // )
-                ),
-            });
-        // .filter(server => server.price < filterPrice)
-        // .map(server => ({
-        //   ...server,
-        //   storage: _.sortBy(server.storage, storage => storage.type).reverse()[0],
-        // }))
-        //   });
-        });
+                });
+          });
     }
 
     render() {
@@ -124,7 +108,15 @@ class App extends React.Component {
             }
 
             return server;
-        });
+        }).sort(firstBy(v => v.price.value)
+        // .thenBy((a, b) => parseFloat(a.cpu.frequency.replace(' Ghz')) > parseFloat(b.cpu.frequency.replace(' Ghz')))
+        // .thenBy((a, b) => a.memory.amout > b.memory.amout)
+        // .thenBy((a, b) => a.cpu.cores > b.cpu.cores)
+        // .thenBy((a, b) => a.storage.type === 'SSD' ? -1 : (b.storage.type === 'SSD' ? 1 : 0))
+        // .thenBy((a, b) => (a.storage.size * a.storage.amount * (a.storage.unit === 'TB' ? 1000 : 1)) > (b.storage.size * b.storage.amount * (b.storage.unit === 'TB' ? 1000 : 1)))
+        // .thenBy((a, b) => (a.bandwidthSpeed.value * (a.bandwidthSpeed.unit === 'Gbps' ? 1024 : 1)) > (b.bandwidthSpeed.value * (b.bandwidthSpeed.value.unit === 'Gbps' ? 1024 : 1)))
+        // .thenBy((a, b) => a.ip > b.ip)
+        );
 
         // const filterPrice = 100;
         // const avg = filterPrice / 3;
