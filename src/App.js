@@ -1,11 +1,7 @@
 import React from 'react';
-// import fs from 'fs';
-// import logo from './logo.svg';
-import _ from 'lodash';
 import shortid from 'shortid';
 import firstBy from 'thenby';
 import BootstrapTable from 'react-bootstrap-table-next';
-import { parseStringPromise } from 'xml2js';
 import './App.css';
 
 const fetchServers = () =>
@@ -27,30 +23,16 @@ const fetchServers = () =>
         });
 
 const fetchCurrencies = () =>
-    fetch("https://cors-anywhere.herokuapp.com/https://www.ecb.europa.eu/stats/eurofxref/eurofxref-daily.xml", {
-        "headers": {
-            "X-Requested-With": "/https://www.ecb.europa.eu",
-        }
-    })
-        .then(response => response.text())
-        .then(parseStringPromise)
-        .then(object => Object.values(object)[0].Cube[0].Cube[0].Cube.map(currency => Object.values(currency)[0]))
-        .then(rawCurrencies => {
-            const currencies = {};
-
-            rawCurrencies.forEach(currency => {
-               currencies[currency.currency] = parseFloat(currency.rate);
-            });
-
-            return currencies;
-        });
+    fetch("http://data.fixer.io/api/latest?access_key=553a7ee7b07bf316af731f3c0bf251f7")
+        .then(response => response.json())
+        .then(({ rates }) => rates);
 
 class App extends React.Component {
     constructor(props) {
         super(props);
         this.state = {
             currencies: {
-                USD: 1,
+                USD: 1.1,
             },
             currency: 'EUR',
             servers: [],
@@ -89,11 +71,12 @@ class App extends React.Component {
             'bandwidthSpeed',
             'bandwidthLimit',
             'price',
-            // 'ips',
             'location',
+            'url',
         ].map(column => ({
             dataField: column,
             text: column,
+            formatter: column === 'url' ? data => <a target="_blank" rel="noopener noreferrer" href={ data }>view</a> : null
         }));
 
         const servers = this.state.servers.map(server => {
@@ -101,7 +84,7 @@ class App extends React.Component {
                 return {
                     ...server,
                     price: {
-                        value: server.price.value * this.state.currencies[server.price.unit],
+                        value: server.price.value / this.state.currencies[server.price.unit],
                         unit: 'EUR'
                     }
                 };
@@ -146,8 +129,8 @@ class App extends React.Component {
                         bandwidthSpeed: `${server.bandwidthSpeed.value} ${server.bandwidthSpeed.unit}`,
                         bandwidthLimit: server.bandwidthLimit.value > 0 ? `${server.bandwidthLimit.value} ${server.bandwidthLimit.unit}` : `∞`,
                         price: `${server.price.value.toFixed(2)}`,
-                        // ips: '???',
                         location: `${server.location.city}, ${server.location.country}`,
+                        url: server.url,
                     }))}
                     columns={columns}
                     bootstrap4={true}
