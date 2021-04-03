@@ -9,7 +9,7 @@ import { parseStringPromise } from 'xml2js';
 import './App.css';
 
 const fetchServers = () =>
-    fetch('https://raw.githubusercontent.com/rapidscrape/best-dedicated-servers/master/output/output.json')
+    fetch('https://raw.githubusercontent.com/serverselect/node-server-scraper/master/output/output.json')
         .then(response => response.json())
         .then(response => {
             const servers = [];
