@@ -2,6 +2,7 @@ import React from 'react';
 import shortid from 'shortid';
 import firstBy from 'thenby';
 import BootstrapTable from 'react-bootstrap-table-next';
+import lunr from 'lunr';
 import './App.css';
 
 const fetchServers = () =>
@@ -27,6 +28,11 @@ const fetchCurrencies = () =>
         .then(response => response.json())
         .then(({ rates }) => rates);
 
+const fetchCpuBenchmarks = () =>
+    fetch("https://raw.githubusercontent.com/ServerSelect/node-cpu-benchmark-scraper/main/output/output.json")
+        .then(response => response.json())
+        .then(({ benchmarks }) => benchmarks);
+
 class App extends React.Component {
     constructor(props) {
         super(props);
@@ -36,22 +42,20 @@ class App extends React.Component {
             },
             currency: 'EUR',
             servers: [],
+            cpuBenchmarks: []
         };
     }
 
     componentDidMount() {
-        this.setServers();
-    }
-
-    setServers() {
         fetchCurrencies().then(currencies => {
             this.setState({
                 ...this.state,
                 currencies,
             });
-        })
-        fetchServers()
-            .then(servers => {
+        });
+
+        Promise.all([
+            fetchServers().then(servers => {
                 this.setState({
                     ...this.state,
                     servers: servers.map(server => ({
@@ -59,13 +63,54 @@ class App extends React.Component {
                         id: shortid.generate(),
                     }))
                 });
-          });
+            }),
+            fetchCpuBenchmarks().then(cpuBenchmarks => {
+                this.setState({
+                    ...this.state,
+                    cpuBenchmarks,
+                });
+            })
+        ]).then(() => {
+            const cpuBenchmarks = this.state.cpuBenchmarks;
+            var idx = lunr(function () {
+                this.field('cpu')
+
+                cpuBenchmarks.forEach(function (doc, i) {
+                    this.add({
+                        ...doc,
+                        id: i.toString()
+                    })
+                }, this);
+            });
+
+            const getMatchingCpuBenchmark = cpuName => {
+                const result = idx.search(cpuName);
+    
+                if(result.length > 0) {
+                    return cpuBenchmarks[parseInt(result[0].ref)].score;
+                }
+                else {
+                    return -1;
+                }
+            };
+
+            const servers = this.state.servers;
+            this.setState({
+                ...this.state,
+                servers: servers.map(server => ({
+                    ...server,
+                    cpuScore: getMatchingCpuBenchmark(server.cpu.name),
+                    id: shortid.generate(),
+                }))
+            });
+        });
     }
 
     render() {
         const columns = [
             'provider',
             'cpu',
+            'cpuScore',
             'ram',
             'storage',
             'bandwidthSpeed',
@@ -91,14 +136,10 @@ class App extends React.Component {
             }
 
             return server;
-        }).sort(firstBy(v => v.price.value)
-        // .thenBy((a, b) => parseFloat(a.cpu.frequency.replace(' Ghz')) > parseFloat(b.cpu.frequency.replace(' Ghz')))
-        // .thenBy((a, b) => a.memory.amout > b.memory.amout)
-        // .thenBy((a, b) => a.cpu.cores > b.cpu.cores)
-        // .thenBy((a, b) => a.storage.type === 'SSD' ? -1 : (b.storage.type === 'SSD' ? 1 : 0))
-        // .thenBy((a, b) => (a.storage.size * a.storage.amount * (a.storage.unit === 'TB' ? 1000 : 1)) > (b.storage.size * b.storage.amount * (b.storage.unit === 'TB' ? 1000 : 1)))
-        // .thenBy((a, b) => (a.bandwidthSpeed.value * (a.bandwidthSpeed.unit === 'Gbps' ? 1024 : 1)) > (b.bandwidthSpeed.value * (b.bandwidthSpeed.value.unit === 'Gbps' ? 1024 : 1)))
-        // .thenBy((a, b) => a.ip > b.ip)
+        }).sort(
+            firstBy(v => v.price.value)
+            .thenBy((a, b) => a.cpuScore > b.cpuScore)
+            .thenBy((a, b) => a.memory.amout > b.memory.amout)
         );
 
         // const filterPrice = 100;
@@ -116,7 +157,7 @@ class App extends React.Component {
         return (
             <div className="App">
                 <h1>Best Dedicated Servers</h1>
-                <div>{this.state.currency}</div>
+                <div>{this.state.currency}. Sorted by price + cpuScore + memory</div>
                 <BootstrapTable
                     loading={this.state.servers <= 0}
                     keyField='id'
@@ -124,6 +165,7 @@ class App extends React.Component {
                         id: server.id,
                         provider: server.provider,
                         cpu: `${server.cpu.amount}x ${server.cpu.frequency} ${server.cpu.name} ${server.cpu.cores} cores`,
+                        cpuScore: server.cpuScore,
                         ram: `${server.memory.value} ${server.memory.unit} ${server.memory.type}`,
                         storage: server.storage.map(storage => `${storage.amount}x ${storage.value} ${storage.unit} ${storage.type} ${storage.connType}`).join(' or '),
                         bandwidthSpeed: `${server.bandwidthSpeed.value} ${server.bandwidthSpeed.unit}`,
