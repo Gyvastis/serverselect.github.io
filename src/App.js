@@ -138,8 +138,8 @@ class App extends React.Component {
             return server;
         }).sort(
             firstBy(v => v.price.value)
-            .thenBy((a, b) => a.cpuScore > b.cpuScore)
-            .thenBy((a, b) => a.memory.amout > b.memory.amout)
+            .thenBy((a, b) => a.cpuScore < b.cpuScore)
+            .thenBy((a, b) => a.memory.amout < b.memory.amout)
         );
 
         // const filterPrice = 100;
