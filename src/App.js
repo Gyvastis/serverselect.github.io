@@ -4,6 +4,7 @@ import firstBy from 'thenby';
 import BootstrapTable from 'react-bootstrap-table-next';
 import lunr from 'lunr';
 import md5 from 'md5';
+import { countries } from 'countries-list';
 import './App.css';
 
 const fetchServers = () =>
@@ -14,10 +15,13 @@ const fetchServers = () =>
 
             response.forEach(serverList => {
                 serverList.servers.filter(server => server.available).forEach(server => {
-                    servers.push({
-                        ...server,
-                        provider: serverList.meta.provider,
-                    });
+                    server.storage.forEach(storage => {
+                        servers.push({
+                            ...server,
+                            storage,
+                            provider: serverList.meta.provider,
+                        });
+                    })
                 });
             });
 
@@ -33,15 +37,6 @@ const fetchCpuBenchmarks = () =>
     fetch("https://raw.githubusercontent.com/ServerSelect/node-cpu-benchmark-scraper/main/output/output.json")
         .then(response => response.json())
         .then(({ benchmarks }) => benchmarks);
-
-function arrayAverage(arr){
-    var sum = 0;
-    for(var i in arr) {
-        sum += arr[i];
-    }
-    var numbersCnt = arr.length;
-    return (sum / numbersCnt);
-}
 class App extends React.Component {
     constructor(props) {
         super(props);
@@ -126,11 +121,19 @@ class App extends React.Component {
             });
         }).then(() => {
             const getServerId = server => {
+                let continent = '';
+                Object.values(countries).forEach(country => {
+                    if(country.name === server.location.country) {
+                        continent = country.continent;
+                    }
+                })
                 let id = `${Math.round(server.cpuScore / 100) * 100}`;
                 id += `_${server.memory.value}-${server.memory.unit}`;
-                id += `_${server.storage[0].amount}x-${server.storage[0].value}-${server.storage[0].unit}-${server.storage[0].type}`;
+                id += `_${server.storage.amount}x-${server.storage.value}-${server.storage.unit}-${server.storage.type}`;
                 id += `_${server.bandwidthSpeed.value}-${server.bandwidthSpeed.unit}`;
-                id += `_${server.bandwidthLimit.value}-${server.bandwidthLimit.unit}`;
+                id += `_${server.bandwidthLimit.value > 0 ? 1 : 0}`;
+                id += `_${continent}`;
+                // console.log(id)
                 return md5(id);
             }
             let groupedPrices = {};
@@ -146,7 +149,7 @@ class App extends React.Component {
 
             let predictedPrices = {};
             Object.keys(groupedPrices).map(id => {
-                predictedPrices[id] = arrayAverage(groupedPrices[id]);
+                predictedPrices[id] = groupedPrices[id].sort()[0] || -1;
             });
 
             this.setState({
@@ -185,7 +188,16 @@ class App extends React.Component {
         );
 
         const rowStyle = (row, rowIndex) => {
-            return parseFloat(row.predictedPrice) > 0 && parseFloat(row.predictedPrice) < parseFloat(row.price) ? { backgroundColor: 'orange' } : {};
+            if(parseFloat(row.predictedPrice) > 0) {
+                if(Math.round(parseFloat(row.predictedPrice)) < Math.round(parseFloat(row.price))) {
+                    return { backgroundColor: 'rgba(255, 0, 0, 0.1)' };
+                }
+                else if(Math.round(parseFloat(row.predictedPrice)) > Math.round(parseFloat(row.price))) {
+                    return { backgroundColor: 'rgba(0, 255, 0, 0.1)' };
+                }
+            }
+
+            return  {};
         };
 
         return (
@@ -201,11 +213,11 @@ class App extends React.Component {
                         cpu: `${server.cpu.amount}x ${server.cpu.frequency} ${server.cpu.name} ${server.cpu.cores} cores`,
                         cpuScore: server.cpuScore,
                         ram: `${server.memory.value} ${server.memory.unit} ${server.memory.type}`,
-                        storage: server.storage.map(storage => `${storage.amount}x ${storage.value} ${storage.unit} ${storage.type} ${storage.connType}`).join(' or '),
+                        storage: `${server.storage.amount}x ${server.storage.value} ${server.storage.unit} ${server.storage.type} ${server.storage.connType}`,
                         bandwidthSpeed: `${server.bandwidthSpeed.value} ${server.bandwidthSpeed.unit}`,
                         bandwidthLimit: server.bandwidthLimit.value > 0 ? `${server.bandwidthLimit.value} ${server.bandwidthLimit.unit}` : `∞`,
                         price: `${server.price.value.toFixed(2)}`,
-                        predictedPrice: `${server.predictedPrice > 0 && server.predictedPrice != server.price.value ? server.predictedPrice.toFixed(2) : '-'}`,
+                        predictedPrice: `${server.predictedPrice > 0 ? server.predictedPrice.toFixed(2) : '-'}`,
                         location: `${server.location.city}, ${server.location.country}`,
                         url: server.url,
                     }))}
@@ -213,7 +225,6 @@ class App extends React.Component {
                     bootstrap4={true}
                     bordered={true}
                     hover={true}
-                    striped={true}
                     condensed={true}
                     rowStyle={rowStyle}
                 />
