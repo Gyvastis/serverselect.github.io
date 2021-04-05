@@ -8,6 +8,7 @@
     "@testing-library/user-event": "^7.1.2",
     "gh-pages": "^3.1.0",
     "lunr": "^2.3.9",
+    "md5": "^2.3.0",
     "react": "^16.12.0",
     "react-bootstrap-table-next": "^3.3.3",
     "react-dom": "^16.12.0",
