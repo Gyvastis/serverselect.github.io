@@ -38,7 +38,7 @@ class App extends React.Component {
         super(props);
         this.state = {
             currencies: {
-                USD: 1.1,
+                USD: 1.18,
             },
             currency: 'EUR',
             servers: [],
@@ -47,12 +47,12 @@ class App extends React.Component {
     }
 
     componentDidMount() {
-        fetchCurrencies().then(currencies => {
-            this.setState({
-                ...this.state,
-                currencies,
-            });
-        });
+        // fetchCurrencies().then(currencies => {
+        //     this.setState({
+        //         ...this.state,
+        //         currencies,
+        //     });
+        // });
 
         Promise.all([
             fetchServers().then(servers => {
@@ -129,7 +129,7 @@ class App extends React.Component {
                 return {
                     ...server,
                     price: {
-                        value: server.price.value / this.state.currencies[server.price.unit],
+                        value: Math.round(server.price.value / this.state.currencies[server.price.unit] * 10) / 10,
                         unit: 'EUR'
                     }
                 };
